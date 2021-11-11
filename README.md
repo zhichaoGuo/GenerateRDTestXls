@@ -1,0 +1,10 @@
+# 已完成内容
+- username、password从代码中分离保存
+- cookies从代码中分离保存
+- 完成log部分
+- 完成生成xlsx部分
+# 待更新内容
+- 指定获取的开始和截止日期
+- 优化utils中的gen_fix_dict()中的删除操作
+- 整理utils中的gen_fix_dict()中对info_dict.yaml的操作
+- 完成过程文件的分期储存，以备不时之需
