@@ -35,7 +35,7 @@ def get_cookies():
     logging.info("close password.yaml")
     # 输入用户名密码
     driver.find_element(By.ID, 'f_user').send_keys(user_data["username"])
-    logging.info("input username "+user_data["username"])
+    logging.info("input username " + user_data["username"])
     driver.find_element(By.ID, 'f_pass').send_keys(user_data["password"])
     logging.info("input password len is " + str(len(user_data["password"])))
     driver.find_element(By.ID, 'f_remember').click()
@@ -123,58 +123,13 @@ def gen_fix_dict(select_time):
         data_list = yaml.safe_load(f)
         data_json = json.dumps(data_list, ensure_ascii=False)
         f.close()
+    del_list = ['_number', 'branch', 'created', 'deletions', 'has_review_started', 'hashtags', 'id', 'insertions',
+                'labels', 'owner', 'requirements', 'status', 'submitted', 'submitter', 'total_comment_count',
+                'unresolved_comment_count', 'updated']
     for i in range(len(data_list)):
-
-        logging.debug('delete ' + str(data_list[i]['_number']))
-        del data_list[i]['_number']
-
-        logging.debug('delete ' + str(data_list[i]['branch']))
-        del data_list[i]['branch']
-
-        logging.debug('delete ' + str(data_list[i]['created']))
-        del data_list[i]['created']
-
-        logging.debug('delete ' + str(data_list[i]['deletions']))
-        del data_list[i]['deletions']
-
-        logging.debug('delete ' + str(data_list[i]['has_review_started']))
-        del data_list[i]['has_review_started']
-
-        logging.debug('delete ' + str(data_list[i]['hashtags']))
-        del data_list[i]['hashtags']
-
-        logging.debug('delete ' + str(data_list[i]['id']))
-        del data_list[i]['id']
-
-        logging.debug('delete ' + str(data_list[i]['insertions']))
-        del data_list[i]['insertions']
-
-        logging.debug('delete ' + str(data_list[i]['labels']))
-        del data_list[i]['labels']
-
-        logging.debug('delete ' + str(data_list[i]['owner']))
-        del data_list[i]['owner']
-
-        logging.debug('delete ' + str(data_list[i]['requirements']))
-        del data_list[i]['requirements']
-
-        logging.debug('delete ' + str(data_list[i]['status']))
-        del data_list[i]['status']
-
-        logging.debug('delete ' + str(data_list[i]['submitted']))
-        del data_list[i]['submitted']
-
-        logging.debug('delete ' + str(data_list[i]['submitter']))
-        del data_list[i]['submitter']
-
-        logging.debug('delete ' + str(data_list[i]['total_comment_count']))
-        del data_list[i]['total_comment_count']
-
-        logging.debug('delete ' + str(data_list[i]['unresolved_comment_count']))
-        del data_list[i]['unresolved_comment_count']
-
-        logging.debug('delete ' + str(data_list[i]['updated']))
-        del data_list[i]['updated']
+        for j in del_list:
+            logging.debug('delete ' + str(data_list[i][j]))
+            del data_list[i][j]
     data_list = remove_same_key_value_list(data_list, 'change_id')
     with open("fix_info_dict.yaml", "w", encoding="UTF-8") as f:
         yaml.dump(data_list, f, allow_unicode=True)

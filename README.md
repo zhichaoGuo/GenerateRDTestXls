@@ -28,9 +28,10 @@
   2. 完成openpyxl对格式的设置
 #### [2021.11.08]
   1. 完成log部分代码
+#### [2021.11.12]
+  1. 优化utils中的gen_fix_dict()中的删除操作
 
 # 待完成内容
 - 指定获取的开始和截止日期
-- 优化utils中的gen_fix_dict()中的删除操作
 - 整理utils中的gen_fix_dict()中对info_dict.yaml的操作
 - 完成过程文件的分期储存，以备不时之需
