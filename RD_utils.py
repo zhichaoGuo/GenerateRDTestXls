@@ -17,12 +17,15 @@ def get_cookies():
     通过selenium模拟登陆的方式获取cookie
     :return:
     """
+    with open("cfg.yaml", "r+") as f:
+        root_url = yaml.safe_load(f)['root_url']
+        f.close()
     # 打开edge浏览器
     driver = webdriver.Edge()
     logging.info("OPEN Edge")
     # 访问repo登陆界面
-    driver.get('http://repo.htek.com:8081/login/')
-    logging.info("open http://repo.htek.com:8081/login/")
+    driver.get(root_url + 'login/')
+    logging.info("open" + root_url + "login/")
     # 隐式等待
     driver.implicitly_wait(10)
     # 取用户名密码
@@ -43,8 +46,8 @@ def get_cookies():
     # 点击登录
     driver.find_element(By.ID, 'b_signin').click()
     logging.info("click sign in")
-    driver.get('http://repo.htek.com:8081/changes/')
-    logging.info("open http://repo.htek.com:8081/changes/")
+    driver.get(root_url + 'changes/')
+    logging.info("open" + root_url + "changes/")
     # 取cookies存yaml
     cookie = driver.get_cookies()
     logging.info("get cookies")
@@ -92,20 +95,13 @@ def gen_fix_dict(select_time):
         cookie = 'jenkins-timestamper-offset=-28800000; GerritAccount=' + GerritAccount + '; XSRF_TOKEN=' + XSRF_TOKEN
         logging.info("use cookies :" + cookie)
         f.close()
-
-    headers = {
-        'Host': 'repo.htek.com:8081',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                      'Chrome/95.0.4638.54 Safari/537.36 Edg/95.0.1020.40',
-        'Accept': '*/*',
-        'Accept-Encoding': 'gzip,deflate',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
-        'Cookie': cookie
-    }
-    get_url = 'http://repo.htek.com:8081/changes/?O=81&S=0&n=50&q=status%3Amerged%20after%3A' + select_time
+    cookies = {'Cookie': cookie}
+    with open("cfg.yaml", "r+") as f:
+        root_url = yaml.safe_load(f)['root_url']
+        headers = yaml.safe_load(f)['header']
+        f.close()
+    headers.update(cookies)
+    get_url = root_url + 'changes/?O=81&S=0&n=50&q=status%3Amerged%20after%3A' + select_time
 
     logging.info('get ' + select_time + '数据')
     r = requests.get(get_url, headers=headers)
@@ -204,4 +200,4 @@ def w_excel(data_list: list):
     sheet1.merge_cells(start_row=len(data_list) + 4, start_column=2, end_row=len(data_list) + 4, end_column=4)
     sheet1.cell(len(data_list) + 4, 2, '本次总计测试   个patch 测试出了   个问题，今日合入质量: ').fill = fill
     # 保存工作表
-    wb.save(str(generate_time()) + '研发测试.xlsx')
+    wb.save('./ExcelFile/' + str(generate_time()) + '研发测试.xlsx')
