@@ -33,10 +33,11 @@
 #### [2021.11.15]
   1. 分离root_url和header到cfg.yaml中
   2. 设置xlsx文件储存位置
+#### [2021.11.16]
+  1. 整理utils中的gen_fix_dict()中对info_dict.yaml的操作
 
 # 待完成内容
 - 指定获取的开始和截止日期
-- 整理utils中的gen_fix_dict()中对info_dict.yaml的操作
 - 完成过程文件的分期储存，以备不时之需
 - 不整理指定库的合入如	vendor/htek/frameworks/apps/VoIP 库
 - 优化解耦excel操作

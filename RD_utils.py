@@ -88,6 +88,7 @@ def gen_fix_dict(select_time):
     :param select_time:
     :return:
     """
+    # 打开cookies文件读取并编制好cookies
     with open("cookies.yaml", encoding="UTF-8") as f:
         yaml_data = yaml.safe_load(f)
         GerritAccount = yaml_data[1]['value']
@@ -96,29 +97,26 @@ def gen_fix_dict(select_time):
         logging.info("use cookies :" + cookie)
         f.close()
     cookies = {'Cookie': cookie}
+    # 读取仓库根目录
     with open("cfg.yaml", "r+") as f:
         root_url = yaml.safe_load(f)['root_url']
+    # 读取预制好的请求头
+    with open("cfg.yaml", "r+") as f:
         headers = yaml.safe_load(f)['header']
         f.close()
+    # 将cookies拼接到请求头上
     headers.update(cookies)
+    # 拼接请求地址
     get_url = root_url + 'changes/?O=81&S=0&n=50&q=status%3Amerged%20after%3A' + select_time
-
     logging.info('get ' + select_time + '数据')
+    # 发送请求
     r = requests.get(get_url, headers=headers)
     logging.info('get request status code :' + str(r.status_code))
+    # 整理响应数据删除头部符号
     json_text = r.text
     json_text = json_text[4:-1]
-    data = json.loads(json_text)
-
-    with open("info_dict.yaml", "w", encoding="UTF-8") as f:
-        logging.debug('open info_dict.yaml')
-        yaml.dump(data, f, allow_unicode=True)
-        f.close()
-        logging.debug('close info_dict.yaml')
-    with open('info_dict.yaml', 'r+', encoding="UTF-8") as f:
-        data_list = yaml.safe_load(f)
-        data_json = json.dumps(data_list, ensure_ascii=False)
-        f.close()
+    data_list = json.loads(json_text)
+    # 定义需要删除的key值并删除
     del_list = ['_number', 'branch', 'created', 'deletions', 'has_review_started', 'hashtags', 'id', 'insertions',
                 'labels', 'owner', 'requirements', 'status', 'submitted', 'submitter', 'total_comment_count',
                 'unresolved_comment_count', 'updated']
@@ -126,11 +124,12 @@ def gen_fix_dict(select_time):
         for j in del_list:
             logging.debug('delete ' + str(data_list[i][j]))
             del data_list[i][j]
+    # 删除change_id重复的项
     data_list = remove_same_key_value_list(data_list, 'change_id')
+    # 存整理后的数据
     with open("fix_info_dict.yaml", "w", encoding="UTF-8") as f:
         yaml.dump(data_list, f, allow_unicode=True)
         f.close()
-    print(data_list)
     logging.info('data_list is ' + str(data_list))
     return data_list
 
