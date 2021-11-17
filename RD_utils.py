@@ -70,6 +70,8 @@ def remove_same_key_value_list(list: list, key: str):
     :param key:
     :return:
     """
+    logging.debug('=============================================================================')
+    logging.debug('remove same key value for list')
     temp = []
     result = []
     for i in range(len(list)):
@@ -79,12 +81,14 @@ def remove_same_key_value_list(list: list, key: str):
             result.append(list[i])
         else:
             logging.info("移除重复 " + key + ':' + list[i][key])
+    logging.debug('=============================================================================')
     return result
 
 
-def gen_fix_dict(select_time):
+def gen_fix_dict(select_time, select_end_time='2023-11-11'):
     """
     整理修建从json中获取的dict
+    :param select_end_time:
     :param select_time:
     :return:
     """
@@ -108,6 +112,8 @@ def gen_fix_dict(select_time):
     headers.update(cookies)
     # 拼接请求地址
     get_url = root_url + 'changes/?O=81&S=0&n=50&q=status%3Amerged%20after%3A' + select_time
+    # 添加结束时间的url 暂时还没使用
+    new_url = root_url + 'changes/?O=81&S=0&n=25&q=status%3Amerged%20after%3A' + select_time + '%20before%3A' + select_end_time
     logging.info('get ' + select_time + '数据')
     # 发送请求
     r = requests.get(get_url, headers=headers)
@@ -116,27 +122,42 @@ def gen_fix_dict(select_time):
     json_text = r.text
     json_text = json_text[4:-1]
     data_list = json.loads(json_text)
+    # 在log中记录data_list
+    logging.debug('=============================================================================')
+    logging.debug('get data is')
+    logging.debug(data_list)
+    logging.debug('=============================================================================')
     # 定义需要删除的key值并删除
     del_list = ['_number', 'branch', 'created', 'deletions', 'has_review_started', 'hashtags', 'id', 'insertions',
                 'labels', 'owner', 'requirements', 'status', 'submitted', 'submitter', 'total_comment_count',
                 'unresolved_comment_count', 'updated']
+    logging.debug('=============================================================================')
+    logging.debug('removed key list is')
+    logging.debug(del_list)
+    logging.debug('=============================================================================')
+    logging.debug('start delete')
     for i in range(len(data_list)):
         for j in del_list:
             logging.debug('delete ' + str(data_list[i][j]))
             del data_list[i][j]
+    logging.debug('=============================================================================')
     # 删除change_id重复的项
     data_list = remove_same_key_value_list(data_list, 'change_id')
-    # 存整理后的数据
-    with open("fix_info_dict.yaml", "w", encoding="UTF-8") as f:
-        yaml.dump(data_list, f, allow_unicode=True)
-        f.close()
+    logging.info('=============================================================================')
+    logging.info('整理后数据为')
+    logging.info(data_list)
+    logging.info('=============================================================================')
+    # # 存整理后的数据 （因添加至log中故放弃存为过程数据）
+    # with open("fix_info_dict.yaml", "w", encoding="UTF-8") as f:
+    #     yaml.dump(data_list, f, allow_unicode=True)
+    #     f.close()
     logging.info('data_list is ' + str(data_list))
     return data_list
 
 
 def generate_time():
     """
-    获取当日日期  2021-11-01
+    获取当日日期 ->str  2021-11-01
     :return:
     """
     today = date.today()
@@ -145,9 +166,9 @@ def generate_time():
 
 def generate_select_time(today):
     """
-    根据传入日期推算验单日期（如周一则瑞算至周五） 2021-10-29
-    :param today:
-    :return:
+    根据传入日期推算验单日期（如周一则瑞算至周五）->str 2021-10-29
+    :param today:str
+    :return select_time:str
     """
     if today.isoweekday() == 1:
         delete_day = datetime.timedelta(days=3)
@@ -161,7 +182,6 @@ def w_excel(data_list: list):
     """
     通过修建后的list生成工作表
     :param data_list:
-    :return:
     """
     # 新建工作簿与工作表
     wb = openpyxl.Workbook()
