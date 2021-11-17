@@ -35,6 +35,9 @@
   2. 设置xlsx文件储存位置
 #### [2021.11.16]
   1. 整理utils中的gen_fix_dict()中对info_dict.yaml的操作
+#### [2021.11.17]
+  1. 修改项目git user.name user.email
+
 
 # 待完成内容
 - 指定获取的开始和截止日期

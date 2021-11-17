@@ -10,7 +10,7 @@ if __name__ == '__main__':
     logging.info('today is ' + str(generate_time()))
     logging.info("today will select " + generate_select_time(generate_time()))
     # 取cookies
-    # get_cookies()
+    get_cookies()
     # 执行主要操作
     w_excel(gen_fix_dict(generate_select_time(generate_time())))
 
