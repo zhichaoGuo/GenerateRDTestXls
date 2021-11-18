@@ -10,7 +10,7 @@ if __name__ == '__main__':
     logging.info('today is ' + str(generate_time()))
     # 目前暂时这样设计，后面增加开始截至事件时再优化
     select_end_time = generate_time()
-    logging.info("today will select " + generate_select_time(generate_time()) + 'to ' + select_end_time)
+    logging.info("today will select " + generate_select_time(generate_time()) + 'to ' + str(select_end_time))
     # 取cookies
     get_cookies()
     # 执行主要操作
