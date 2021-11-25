@@ -92,6 +92,8 @@ def gen_fix_dict(select_time, select_end_time='2023-11-11'):
     :param select_time:
     :return:
     """
+    if select_end_time is None:
+        select_end_time = '2023-11-11'
     # 打开cookies文件读取并编制好cookies
     with open("cookies.yaml", encoding="UTF-8") as f:
         yaml_data = yaml.safe_load(f)
@@ -113,10 +115,11 @@ def gen_fix_dict(select_time, select_end_time='2023-11-11'):
     # 拼接请求地址
     get_url = root_url + 'changes/?O=81&S=0&n=50&q=status%3Amerged%20after%3A' + select_time
     # 添加结束时间的url 暂时还没使用
-    new_url = root_url + 'changes/?O=81&S=0&n=25&q=status%3Amerged%20after%3A' + select_time + '%20before%3A' + select_end_time
+    new_url = root_url + 'changes/?O=81&S=0&n=50&q=status%3Amerged%20after%3A' + select_time + '%20before%3A' + str(select_end_time)
     logging.info('get ' + select_time + '数据')
     # 发送请求
-    r = requests.get(get_url, headers=headers)
+    # r = requests.get(get_url, headers=headers)
+    r = requests.get(new_url, headers=headers)
     logging.info('get request status code :' + str(r.status_code))
     # 整理响应数据删除头部符号
     json_text = r.text
@@ -181,6 +184,18 @@ def generate_select_time(today):
 def w_excel(data_list: list):
     """
     通过修建后的list生成工作表
+    data_list = [
+                    {
+                        'project': '---',
+                        'change_id': '-------------------------------',
+                        'subject': "-------------------------------------"
+                    },
+                    {
+                        'project': '---',
+                        'change_id': '-------------------------------',
+                        'subject': "-------------------------------------"
+                    }
+                ]
     :param data_list:
     """
     # 新建工作簿与工作表
