@@ -50,3 +50,4 @@
 - 不整理指定库的合入如	vendor/htek/frameworks/apps/VoIP 库
 - 优化解耦excel操作
 - 增加日期标头的分类（在更新指定获取的开始和截至日期后有用，或周一获取周五周六周日等多日期时有用）
+- test git fetch
