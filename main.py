@@ -47,7 +47,7 @@ if __name__ == '__main__':
     # select_end_time = generate_time()
     # logging.info("today will select " + generate_select_time(generate_time()) + 'to ' + str(select_end_time))
     # # 取cookies
-    # get_cookies()
+    get_cookies()
     # # 执行主要操作
     # w_excel(gen_fix_dict(generate_select_time(generate_time())))
     run_RD_test_xls(log_level='DEBUG')
