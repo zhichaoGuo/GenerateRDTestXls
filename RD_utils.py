@@ -62,6 +62,16 @@ def get_cookies():
     driver.quit()
     logging.info("quit driver")
 
+def get_cookies_without_selenium():
+    url = 'http://repo.htek.com:8081/login/%2Fq%2Fstatus%3Aopen'
+    body = {"username": 'yaki.guo',
+            "password": 'Gzc654321'}
+    r = requests.post(url, params=body)
+    GerritAccount = r.request.headers.get('Cookie').split('GerritAccount=')[-1]
+    XSRF_TOKEN = r.cookies.get('XSRF_TOKEN')
+    cookie = 'jenkins-timestamper-offset=-28800000; GerritAccount=' + GerritAccount + '; XSRF_TOKEN=' + XSRF_TOKEN
+    cookies = {'Cookie': cookie}
+    return cookies
 
 def remove_same_key_value_list(list: list, key: str):
     """
@@ -95,14 +105,14 @@ def gen_fix_dict(select_time, select_end_time='2023-11-11'):
     if select_end_time is None:
         select_end_time = '2023-11-11'
     # 打开cookies文件读取并编制好cookies
-    with open("cookies.yaml", encoding="UTF-8") as f:
-        yaml_data = yaml.safe_load(f)
-        GerritAccount = yaml_data[1]['value']
-        XSRF_TOKEN = yaml_data[0]['value']
-        cookie = 'jenkins-timestamper-offset=-28800000; GerritAccount=' + GerritAccount + '; XSRF_TOKEN=' + XSRF_TOKEN
-        logging.info("use cookies :" + cookie)
-        f.close()
-    cookies = {'Cookie': cookie}
+    # with open("cookies.yaml", encoding="UTF-8") as f:
+    #     yaml_data = yaml.safe_load(f)
+    #     GerritAccount = yaml_data[1]['value']
+    #     XSRF_TOKEN = yaml_data[0]['value']
+    #     cookie = 'jenkins-timestamper-offset=-28800000; GerritAccount=' + GerritAccount + '; XSRF_TOKEN=' + XSRF_TOKEN
+    #     logging.info("use cookies :" + cookie)
+    #     f.close()
+    cookies = get_cookies_without_selenium()
     # 读取仓库根目录
     with open("cfg.yaml", "r+") as f:
         root_url = yaml.safe_load(f)['root_url']

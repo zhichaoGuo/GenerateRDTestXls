@@ -41,6 +41,7 @@ def run_RD_test_xls(start_time=None, end_time=None, log_level='DEBUG'):
     w_excel(gen_fix_dict(start_time, select_end_time))
 
 
+
 def upgrade_driver(src_dir):
     print('--------------------------------------------------')
     import requests  # 请求并下载相应的msedgedriver版本
@@ -80,10 +81,12 @@ def upgrade_driver(src_dir):
         options = Options()
         options.add_argument('headless')
         webdriver.Edge(options=options)
-    except SessionNotCreatedException as msg:
-        reg = re.search("(.*)Current browser version is (.*) with", str(msg))  # 识别并匹配Exception信息中出现的版本号
+    # except SessionNotCreatedException as msg:
+    except selenium.common.exceptions.WebDriverException as msg:
+        reg = re.search("(.*)headless MicrosoftEdge=(.*)\)", str(msg))  # 识别并匹配Exception信息中出现的版本号
         edge_version = reg.group(2)  # 获得版本号
         url = 'https://msedgedriver.azureedge.net/' + edge_version + '/edgedriver_win64.zip'
+        print(url)
         response = requests.get(url=url)
         file_dir = src_dir + edge_version + '.zip'
         open(file_dir, 'wb').write(response.content)  # 下载压缩文件
@@ -103,18 +106,20 @@ if __name__ == '__main__':
     # select_end_time = generate_time()
     # logging.info("today will select " + generate_select_time(generate_time()) + 'to ' + str(select_end_time))
     # 取cookies
-    webdriver = 'C:\\Users\\admin\\AppData\\Local\\Programs\\Python\\Python37\\'
-    try:
-        get_cookies()
-    except Exception:
-        upgrade_driver(webdriver)
-        get_cookies()
+
+    # webdriver = 'C:\\Users\\admin\\AppData\\Local\\Programs\\Python\\Python37\\'
+    # try:
+    #     get_cookies()
+    # except selenium.common.exceptions.WebDriverException:
+    #     upgrade_driver(webdriver)
+    #     get_cookies()
 
     # download ：https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/
     # # 执行主要操作
     # w_excel(gen_fix_dict(generate_select_time(generate_time())))
     run_RD_test_xls(log_level='DEBUG')
-    # run_RD_test_xls('2022-10-14','2022-10-18',log_level='DEBUG')
+    # run_RD_test_xls('2023-4-4','2023-4-6',log_level='DEBUG')
     # a = b'\xd5\xd2\xb2\xbb\xb5\xbd\xd6\xb8\xb6\xa8\xb5\xc4\xc4\xa3\xbf\xe9\xa1\xa3'
     # print(a.decode('gbk'))
+
 
