@@ -1,171 +1,42 @@
+import datetime
 import json
-import logging
-from time import sleep
-
+from datetime import date
+import openpyxl
 import requests
 import yaml
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-import datetime
-from datetime import date, timedelta
-import openpyxl
 from openpyxl.styles import Alignment, PatternFill
 
+elpis_repo = ['VOIP',
+              'voip/build',
+              'voip/customization',
+              'voip/manifest',
+              'voip/pack',
+              'voip/module/webpage',
+              'voip/module/vendor',
+              'voip/module/minigui',
+              'voip/platform/mtk/patch',
+              'voip/platform/dspg/kernel',
+              'voip/platform/dspg/u-boot',
+              'voip/platform/dspg/tools']
+hos_repo = ['android/device/htek',
+            'external/camera_engine_rkaiq',
+            'HtekOEM',
+            'platform/frameworks/av',
+            'platform/frameworks/base',
+            'platform/frameworks/native',
+            'platform/packages/apps/Launcher3',
+            'platform/packages/apps/Settings',
+            'platform/packages/modules/NetworkStack',
+            'platform/system/core',
+            'platform/system/netd',
+            'rk/hardware/rk29/audio',
+            'rk/kernel',
+            'voip/module/android',
+            'vendor/htek/common',
+            'vendor/htek/frameworks/apps/VoIP']
 
-def get_cookies():
-    """
-    通过selenium模拟登陆的方式获取cookie
-    :return:
-    """
-    with open("cfg.yaml", "r+") as f:
-        root_url = yaml.safe_load(f)['root_url']
-        f.close()
-    # 打开edge浏览器
-    driver = webdriver.Edge()
-    logging.info("OPEN Edge")
-    # 访问repo登陆界面
-    driver.get(root_url + 'login/')
-    logging.info("open" + root_url + "login/")
-    # 隐式等待
-    driver.implicitly_wait(10)
-    # 取用户名密码
-    logging.info("open password.yaml")
-    with open("password.yaml", encoding="UTF-8") as f:
-        logging.info("load data")
-        user_data = yaml.safe_load(f)
-        logging.info("load data over")
-    f.close()
-    logging.info("close password.yaml")
-    # 输入用户名密码
-    driver.find_element(By.ID, 'f_user').send_keys(user_data["username"])
-    logging.info("input username " + user_data["username"])
-    driver.find_element(By.ID, 'f_pass').send_keys(user_data["password"])
-    logging.info("input password len is " + str(len(user_data["password"])))
-    driver.find_element(By.ID, 'f_remember').click()
-    logging.info("click remember me")
-    # 点击登录
-    driver.find_element(By.ID, 'b_signin').click()
-    logging.info("click sign in")
-    driver.get(root_url + 'changes/')
-    logging.info("open" + root_url + "changes/")
-    # 取cookies存yaml
-    cookie = driver.get_cookies()
-    logging.info("get cookies")
-    with open("cookies.yaml", "w", encoding="UTF-8") as f:
-        logging.info("open cookies.yaml")
-        yaml.dump(cookie, f)
-        logging.info("save cookies")
-    f.close()
-    logging.info("close cookies.yaml")
-    sleep(1)
-    # 关闭网页
-    driver.quit()
-    logging.info("quit driver")
-
-def get_cookies_without_selenium():
-    url = 'http://repo.htek.com:8081/login/%2Fq%2Fstatus%3Aopen'
-    body = {"username": 'yaki.guo',
-            "password": 'Gzc654321'}
-    r = requests.post(url, params=body)
-    GerritAccount = r.request.headers.get('Cookie').split('GerritAccount=')[-1]
-    XSRF_TOKEN = r.cookies.get('XSRF_TOKEN')
-    cookie = 'jenkins-timestamper-offset=-28800000; GerritAccount=' + GerritAccount + '; XSRF_TOKEN=' + XSRF_TOKEN
-    cookies = {'Cookie': cookie}
-    return cookies
-
-def remove_same_key_value_list(list: list, key: str):
-    """
-    删除列表中字典里指定key中value相同的字典
-    :param list:
-    :param key:
-    :return:
-    """
-    logging.debug('=============================================================================')
-    logging.debug('remove same key value for list')
-    temp = []
-    result = []
-    for i in range(len(list)):
-        if list[i][key] not in temp:
-            temp.append(list[i][key])
-            logging.debug("保存记录 " + key + ':' + list[i][key])
-            result.append(list[i])
-        else:
-            logging.info("移除重复 " + key + ':' + list[i][key])
-    logging.debug('=============================================================================')
-    return result
-
-
-def gen_fix_dict(select_time, select_end_time='2023-11-11'):
-    """
-    整理修建从json中获取的dict
-    :param select_end_time:
-    :param select_time:
-    :return:
-    """
-    if select_end_time is None:
-        select_end_time = '2023-11-11'
-    # 打开cookies文件读取并编制好cookies
-    # with open("cookies.yaml", encoding="UTF-8") as f:
-    #     yaml_data = yaml.safe_load(f)
-    #     GerritAccount = yaml_data[1]['value']
-    #     XSRF_TOKEN = yaml_data[0]['value']
-    #     cookie = 'jenkins-timestamper-offset=-28800000; GerritAccount=' + GerritAccount + '; XSRF_TOKEN=' + XSRF_TOKEN
-    #     logging.info("use cookies :" + cookie)
-    #     f.close()
-    cookies = get_cookies_without_selenium()
-    # 读取仓库根目录
-    with open("cfg.yaml", "r+") as f:
-        root_url = yaml.safe_load(f)['root_url']
-    # 读取预制好的请求头
-    with open("cfg.yaml", "r+") as f:
-        headers = yaml.safe_load(f)['header']
-        f.close()
-    # 将cookies拼接到请求头上
-    headers.update(cookies)
-    # 拼接请求地址
-    get_url = root_url + 'changes/?O=81&S=0&n=50&q=status%3Amerged%20after%3A' + select_time
-    # 添加结束时间的url 暂时还没使用
-    new_url = root_url + 'changes/?O=81&S=0&n=50&q=status%3Amerged%20after%3A' + select_time + '%20before%3A' + str(select_end_time)
-    logging.info('get ' + select_time + '数据')
-    # 发送请求
-    # r = requests.get(get_url, headers=headers)
-    r = requests.get(new_url, headers=headers)
-    logging.info('get request status code :' + str(r.status_code))
-    # 整理响应数据删除头部符号
-    json_text = r.text
-    json_text = json_text[4:-1]
-    data_list = json.loads(json_text)
-    # 在log中记录data_list
-    logging.debug('=============================================================================')
-    logging.debug('get data is')
-    logging.debug(data_list)
-    logging.debug('=============================================================================')
-    # 定义需要删除的key值并删除
-    del_list = ['_number', 'branch', 'created', 'deletions', 'has_review_started', 'hashtags', 'id', 'insertions',
-                'labels', 'owner', 'requirements', 'status', 'submitted', 'submitter', 'total_comment_count',
-                'unresolved_comment_count', 'updated']
-    logging.debug('=============================================================================')
-    logging.debug('removed key list is')
-    logging.debug(del_list)
-    logging.debug('=============================================================================')
-    logging.debug('start delete')
-    for i in range(len(data_list)):
-        for j in del_list:
-            logging.debug('delete ' + str(data_list[i][j]))
-            del data_list[i][j]
-    logging.debug('=============================================================================')
-    # 删除change_id重复的项
-    data_list = remove_same_key_value_list(data_list, 'change_id')
-    logging.info('=============================================================================')
-    logging.info('整理后数据为')
-    logging.info(data_list)
-    logging.info('=============================================================================')
-    # # 存整理后的数据 （因添加至log中故放弃存为过程数据）
-    # with open("fix_info_dict.yaml", "w", encoding="UTF-8") as f:
-    #     yaml.dump(data_list, f, allow_unicode=True)
-    #     f.close()
-    logging.info('data_list is ' + str(data_list))
-    return data_list
+with open("cfg.yaml", "r+") as f:
+    conf = yaml.safe_load(f)
 
 
 def generate_time():
@@ -191,57 +62,142 @@ def generate_select_time(today):
     return str(select_time)
 
 
-def w_excel(data_list: list):
+def count_select_time(start_time, end_time):
+    if (start_time is None) & (end_time is None):
+        # 不输入起始时间也不输入终止时间，按照今日研发测试进行搜索
+        start_time = generate_select_time(generate_time())
+        end_time = generate_time()
+    elif (start_time is not None) & (end_time is not None):
+        end_time = end_time
+    else:
+        start_time = generate_time()
+        end_time = generate_time()
+    return start_time, end_time
+
+
+def get_cookies_without_selenium():
+    url = conf['root_url'] + 'login/%2Fq%2Fstatus%3Aopen'
+    body = {"username": conf['auth']['username'],
+            "password": conf['auth']['password']}
+    r = requests.post(url, params=body)
+    GerritAccount = r.request.headers.get('Cookie').split('GerritAccount=')[-1]
+    XSRF_TOKEN = r.cookies.get('XSRF_TOKEN')
+    cookie = 'jenkins-timestamper-offset=-28800000; GerritAccount=' + GerritAccount + '; XSRF_TOKEN=' + XSRF_TOKEN
+    cookies = {'Cookie': cookie}
+    return cookies
+
+
+def get_data_from_gerrit(url: str, header: dict) -> list:
+    r = requests.get(url, headers=header)
+    json_text = r.text
+    json_text = json_text[4:-1]
+    data_list = json.loads(json_text)
+    return data_list
+
+
+def adjust_repeat_data(data_list: list) -> dict:
     """
-    通过修建后的list生成工作表
-    data_list = [
-                    {
-                        'project': '---',
-                        'change_id': '-------------------------------',
-                        'subject': "-------------------------------------"
-                    },
-                    {
-                        'project': '---',
-                        'change_id': '-------------------------------',
-                        'subject': "-------------------------------------"
-                    }
-                ]
+    将同一笔patch的不同分支合并成为新的数据结构
     :param data_list:
+    :return:
     """
+    out = {}
+    for i in data_list:
+        if i['change_id'] not in out.keys():
+            out[i['change_id']] = {'project': i['project'], 'branch': [i['branch']], 'subject': i['subject']}
+        else:
+            out[i['change_id']]['branch'].append(i['branch'])
+    return out
+
+
+def adjust_original_data(data_list: list) -> (list, list):
+    """
+
+    :param data_list:
+    :return:
+    """
+    del_list = ['_number', 'created', 'deletions', 'has_review_started', 'hashtags', 'id', 'insertions',
+                'labels', 'owner', 'requirements', 'status', 'submitted', 'submitter', 'total_comment_count',
+                'unresolved_comment_count', 'updated']
+    _elpis, _hos, _other = [], [], []
+    for i in range(len(data_list)):
+        for j in del_list:
+            del data_list[i][j]
+    for i in data_list:
+        if i['project'] in elpis_repo:
+            _elpis.append(i)
+        elif i['project'] in hos_repo:
+            _hos.append(i)
+        else:
+            _other.append(i)
+    _elpis = adjust_repeat_data(_elpis)
+    _hos = adjust_repeat_data(_hos)
+    _other = adjust_repeat_data(_other)
+    if _other:
+        print('未定义repo库：%s' % _other)
+    return _elpis, _hos, _other
+
+
+def make_excel(elpis: dict, hos: dict, other: dict):
     # 新建工作簿与工作表
     wb = openpyxl.Workbook()
     wb.create_sheet(index=0, title='sheet1')
     sheet1 = wb.worksheets[0]
+    work_line_index = 1
     # 设置列宽
     sheet1.column_dimensions['A'].width = 43
-    sheet1.column_dimensions['B'].width = 5
-    sheet1.column_dimensions['C'].width = 55
-    sheet1.column_dimensions['D'].width = 20
-    # 设置表头格式
-    sheet1.merge_cells('A1:D1')
-    sheet1.cell(1, 1).fill = PatternFill("solid", fgColor="6BA9E6")
-    title_name = generate_select_time(generate_time()) + ' PATCH 信息'
-    sheet1.cell(1, 1, title_name)
-    alignment_center = Alignment(horizontal='center', vertical='center')
-    sheet1.cell(1, 1).alignment = alignment_center
-    fill = PatternFill("solid", fgColor="80A2DA")
-    fill1 = PatternFill("solid", fgColor="EAF6E1")
-    # 设置表头样式
-    sheet1.cell(2, 1, 'change_id').fill = fill
-    sheet1.cell(2, 2, 'type').fill = fill
-    sheet1.cell(2, 3, 'JIRA ID and DESC').fill = fill
-    sheet1.cell(2, 4, 'Comment').fill = fill
-    # 循环写入内容
-    for i in range(len(data_list)):
-        sheet1.cell(i + 3, 1, data_list[i]['change_id']).fill = fill1
-        sheet1.cell(i + 3, 2).fill = fill1
-        sheet1.cell(i + 3, 3, data_list[i]['subject']).alignment = Alignment(wrapText=True)
-        sheet1.cell(i + 3, 3).fill = fill1
-        sheet1.cell(i + 3, 4).fill = fill1
-        # sheet1.cell(i+3, 4, data_list[i]['project'])
-    # 写入表尾内容并设置格式
-    sheet1.cell(len(data_list) + 4, 1, '总结').fill = fill
-    sheet1.merge_cells(start_row=len(data_list) + 4, start_column=2, end_row=len(data_list) + 4, end_column=4)
-    sheet1.cell(len(data_list) + 4, 2, '本次总计测试   个patch 测试出了   个问题，今日合入质量: ').fill = fill
+    sheet1.column_dimensions['B'].width = 15
+    sheet1.column_dimensions['C'].width = 22
+    sheet1.column_dimensions['D'].width = 55
+    sheet1.column_dimensions['E'].width = 20
+
+    work_table = []
+    for i in [elpis, hos, other]:
+        if i:
+            work_table.append(i)
+    for table in work_table:
+        # 设置表头格式
+        sheet1.merge_cells(start_row=work_line_index, start_column=1, end_row=work_line_index, end_column=5)
+        sheet1.cell(work_line_index, 1).fill = PatternFill("solid", fgColor="6BA9E6")
+        title_name = generate_select_time(generate_time()) + ' PATCH 信息'
+        sheet1.cell(work_line_index, 1, title_name)
+        alignment_center = Alignment(horizontal='center', vertical='center')
+        sheet1.cell(work_line_index, 1).alignment = alignment_center
+        fill = PatternFill("solid", fgColor="80A2DA")
+        fill1 = PatternFill("solid", fgColor="EAF6E1")
+        # 设置表头样式
+        work_line_index = work_line_index + 1
+        sheet1.cell(work_line_index, 1, 'change_id').fill = fill
+        sheet1.cell(work_line_index, 2, 'repo').fill = fill
+        sheet1.cell(work_line_index, 3, 'branch').fill = fill
+        sheet1.cell(work_line_index, 4, 'JIRA ID and DESC').fill = fill
+        sheet1.cell(work_line_index, 5, 'Comment').fill = fill
+        # 填充数据
+        work_line_index = work_line_index + 1
+        for i in table:
+            for j in table[i]['branch']:
+                sheet1.cell(work_line_index, 1, i).fill = fill1
+                sheet1.cell(work_line_index, 2, table[i]['project']).fill = fill1
+                sheet1.cell(work_line_index, 3, j).alignment = Alignment(wrapText=True)
+                sheet1.cell(work_line_index, 3).fill = fill1
+                sheet1.cell(work_line_index, 4, table[i]['subject']).alignment = Alignment(wrapText=True)
+                sheet1.cell(work_line_index, 4).fill = fill1
+                sheet1.cell(work_line_index, 5).fill = fill1
+                work_line_index = work_line_index + 1
+            # 合并单元格
+            if len(table[i]['branch']) > 1:
+                sheet1.merge_cells(start_row=work_line_index - len(table[i]['branch']), start_column=1,
+                                   end_row=work_line_index - 1, end_column=1)
+                sheet1.merge_cells(start_row=work_line_index - len(table[i]['branch']), start_column=2,
+                                   end_row=work_line_index - 1, end_column=2)
+                sheet1.merge_cells(start_row=work_line_index - len(table[i]['branch']), start_column=4,
+                                   end_row=work_line_index - 1, end_column=4)
+                sheet1.merge_cells(start_row=work_line_index - len(table[i]['branch']), start_column=5,
+                                   end_row=work_line_index - 1, end_column=5)
+        # 写入表尾内容并设置格式
+        sheet1.cell(work_line_index, 1, '总结').fill = fill
+        sheet1.merge_cells(start_row=work_line_index, start_column=2, end_row=work_line_index, end_column=5)
+        sheet1.cell(work_line_index, 2, '本次总计测试   个patch 测试出了   个问题，今日合入质量: ').fill = fill
+        work_line_index = work_line_index + 2
     # 保存工作表
     wb.save('./ExcelFile/' + str(generate_time()) + '研发测试.xlsx')
